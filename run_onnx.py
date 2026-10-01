@@ -5,19 +5,18 @@ from typing import Mapping, List, Union
 import onnxruntime
 import numpy as np
 from PIL import Image
-from torchvision import transforms
 
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
+def preprocess_image(image: Image.Image) -> np.ndarray:
+    image = image.convert("RGB").resize((224, 224), Image.Resampling.BILINEAR)
+    img_arr = np.array(image, dtype=np.float32) / 255.0
+    mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+    std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+    img_arr = (img_arr - mean) / std
+    img_arr = np.transpose(img_arr, (2, 0, 1))
+    return np.expand_dims(img_arr, axis=0)
 
 default_providers = [
     'CUDAExecutionProvider',
-    'MIGraphXExecutionProvider',
-    'ROCMExecutionProvider',
-    'OpenVINOExecutionProvider',
     'CPUExecutionProvider',
 ]
 
@@ -48,9 +47,7 @@ class OrientationDetection:
 
     @staticmethod
     def to_array(image: Image.Image) -> np.ndarray:
-        image = image.convert("RGB")
-        numpy_image: np.ndarray = transform(image).unsqueeze(0).numpy()
-        return numpy_image
+        return preprocess_image(image)
 
     def get_angles(self, numpy_image: np.ndarray) -> Mapping[int, float]:
         input_name = self.ort_session.get_inputs()[0].name

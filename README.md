@@ -1,26 +1,34 @@
-##  Image Orientation Detection Using ResNet
+# Autorotate Incoming Photos using ResNet
 
+Fork of [Image Orientation Detection Using ResNet](https://github.com/parsapoorsh/resnet-ixion), with some changes for storage usage and usability.
 
-Try it in Google Colab [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1VQ0U_WUIAObFzZtm9WEQWap8i6C6NMHW?usp=sharing)
+Main code changes:
+- Updated `run_onnx.py` to replace torchvision.transforms with a pure numpy + PIL pre-processing function (preprocess_image), eliminating torch and torchvision dependencies during inference.
+- Updated `requirements.txt` to reflect the slim dependency list (torch+torchvision -> onnxruntime+numpy).
+  - Original environment size: 5.6 GB (PyTorch + CUDA binaries)
+  - New environment size: 200 MB (ONNX runtime + NumPy)
 
-Or download the model from [GitHub Releases](https://github.com/parsapoorsh/resnet-ixion/releases):
+Now, running this in Termux on your phone requires only ~200 MB for the Python environment + 232 MB for the .onnx model file (under 450 MB total).
 
-## Intro
-this model is a fine-tuned variant of resnet152.
+## Instructions
 
-it's been converted to a classfication model with 4 classes. `0°, 90°, 180°, 270°`.
+### Setup
 
-![image](https://raw.githubusercontent.com/parsapoorsh/resnet-ixion/refs/heads/master/README.jpg)
+(Assumes you're in the project root directory)
 
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+wget https://github.com/parsapoorsh/resnet-ixion/releases/download/1.0.0/resnet152_ixion_e3-fac493d9.onnx
+```
 
-### Training Data
-for fine-tunning this model, i used MS COCO (Microsoft Common Objects in Context) dataset.
-`train2017` and `test2017` for training, and `val2017` for validation.
+### Usage
 
-### Training Hardware
-GPU: `NVIDIA GTX 1660 SUPER 6 GIB VRAM`
+Example - Autorotate photos on Termux that have been taken on by a Pixel device.
 
-time per epoch: ~ 3h:45m
+```bash
+python3 autorotate_incoming_photos.py --watch-folder "~/storage/shared/DCIM/Camera/" --pattern "PXL_*.jpg" --state "~/storage/shared/DCIM/Camera/state.json" --log "~/storage/shared/DCIM/Camera/test.log"
+```
 
-## Licence
-same licence as resnet. `apache-2.0`
+## License
+`apache-2.0`
